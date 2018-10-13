@@ -10,6 +10,7 @@ interface State {
   workState: WorkState,
   loop: number
   isProgress: boolean,
+  isFinished: boolean,
   interval: NodeJS.Timer | null,
 }
 
@@ -23,12 +24,16 @@ class Timer extends React.Component<Props, State> {
       workState: 'InProgress',
       loop: props.loop,
       isProgress: false,
+      isFinished: false,
       interval: null,
     }
   }
 
   tick = () => {
-    this.setState({ ...this.state, sec: this.state.sec - 1 }, () => {
+    this.setState({
+      ...this.state,
+      sec: this.state.sec - 1,
+    }, () => {
       if (this.state.sec <= 0) {
         this.toggleWorkStateOrStop()
       }
@@ -50,6 +55,7 @@ class Timer extends React.Component<Props, State> {
       workState: 'InProgress',
       loop: this.props.loop,
       isProgress: false,
+      isFinished: false,
       interval: null,
     })
   }
@@ -59,7 +65,7 @@ class Timer extends React.Component<Props, State> {
       <View style={styles.container}>
         <Text>Sec:{this.state.sec}</Text>
         <Text>Loop:{this.state.loop}</Text>
-        <Button title={this.state.loop === 0 ? 'Reset' : 'Start'} onPress={this.state.loop === 0 ? this.reset : this.start} />
+        <Button title={this.state.isFinished ? 'Reset' : 'Start'} onPress={this.state.isFinished ? this.reset : this.start} />
       </View>
     )
   }
@@ -69,10 +75,17 @@ class Timer extends React.Component<Props, State> {
     const sec = workState === 'InProgress' ? this.props.progressTime : this.props.restTime
     const loop = workState === 'InProgress' ? this.state.loop - 1 : this.state.loop
 
-    if (loop === 0) {
+    const isFinished = loop === 1 && workState === 'Rest'
+    if (isFinished) {
       if (this.state.interval) clearInterval(this.state.interval)
     }
-    this.setState({ ...this.state, workState, sec, loop, isProgress: loop === 0 })
+    this.setState({
+      workState,
+      loop,
+      isFinished,
+      sec: isFinished ? 0 : sec,
+      isProgress: !isFinished,
+    })
   }
 }
 
